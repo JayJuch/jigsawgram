@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Browsing pictures in {{album_name}}{% endblock %}
+{% block content %}
+Album contains {{num_results}} pictures.
+
+<table>
+{% for row in pics %}
+<tr>
+{% for image in row %}
+<td>
+  <a href='/show_image/{{image.key}}'>
+      <img src='/thumbnail/{{image.key}}'>
+  </a>
+
+  Jigsaw:
+  <a href='/show_jigsaw_image/{{image.key}}'>
+      <img src='/thumbnail/{{image.key}}'>
+  </a>
+
+  <a class="btn btn-primary btn-lg" role="button" href='https://mail.google.com/mail/?view=cm&fs=1&su=Here&#39+a+jigsaw+puzzle+for+you!&body=%0A%0A{{ domain }}show_jigsaw_image/{{image.key}}%0A'>Send Puzzle&raquo;</a>
+
+  <div class='imgsubmitter'>{{image.submitter}}</div>
+</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</table>
+<a href='/'>Browse albums</a><br>
+<a href='/upload/{{album_key}}'>Upload new image</a>
+{% endblock content %}

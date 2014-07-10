@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}{{pic.title}}{% endblock %}
+{% block content %}
+    <h1>{{pic.caption}}</h1>
+
+    <h2>from {{pic.submitter}}</h2>
+
+<div class="container special">
+    <div class="jumbotron">
+        <div class="fullarea" id="jigsawContainer"></div>
+    </div>
+</div>
+
+    <script src="http://d3lp1msu2r81bx.cloudfront.net/kjs/js/lib/kinetic-v5.0.1.min.js"></script>
+    <script defer="defer">
+      function loadImage(source, callback) {
+        var image;
+        image = new Image();
+        image.onload = function() {
+            callback(image);
+          };
+        image.src = source;
+      }
+
+
+
+      function isNearOutline(animal, outline) {
+        var a = animal;
+        var o = outline;
+        var ax = a.getX();
+        var ay = a.getY();
+
+        if(ax > o.x - 20 && ax < o.x + 20 && ay > o.y - 20 && ay < o.y + 20) {
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+
+      function drawBackground(background, image, scale) {
+        var bgImage = new Kinetic.Rect({
+                x: 0,
+                y: 0,
+                brightness: 0,
+                blurRadius: 0,
+                width: jigsawContainer.clientWidth,
+                height: jigsawContainer.clientHeight,
+          fillPatternImage: image,
+          fillPatternOffset: {x:0, y:0},
+          fillPatternScale: {x:scale, y:scale},
+          fillPatternRepeat: "no-repeat",
+          stroke: 'black',
+          strokeWidth: 4,
+          draggable: true
+        });
+        background.add(bgImage);
+      }
+
+
+
+      function initStage(image) {
+
+
+        // calc scale
+        var sourceAspectRatio = image.width/image.height;
+        var targetAspectRatio = jigsawContainer.clientWidth / jigsawContainer.clientHeight;
+
+        var wScale = jigsawContainer.clientWidth / image.width;
+        var hScale = jigsawContainer.clientHeight / image.height;
+        var scale;
+        var stage;
+        if (hScale > wScale) {
+            stage = new Kinetic.Stage({
+              container: 'jigsawContainer',
+              width: jigsawContainer.clientWidth ,
+              height: jigsawContainer.clientWidth * (image.height/image.width)
+            });
+            scale = wScale;
+        } else {
+            var scaledWidth = jigsawContainer.clientHeight * (image.width/image.height);
+            stage = new Kinetic.Stage({
+              container: 'jigsawContainer',
+              width: scaledWidth ,
+              height: jigsawContainer.clientHeight
+            });
+            scale = hScale;
+        }
+
+        var background = new Kinetic.Layer();
+        var puzzleLayer = new Kinetic.Layer();
+
+        drawBackground(puzzleLayer, image, scale);
+        createPuzzlePieces(image,10, scale, puzzleLayer);
+
+
+//        stage.add(background);
+        stage.add(puzzleLayer);
+
+      }
+
+      function createPuzzlePieces(image, maxPieces, scale, layer) {
+        var area = image.width * image.height;
+        var areaPiece = area / maxPieces;
+        var pieceWidth = Math.floor(Math.sqrt(areaPiece)) + 1;
+        var scaledPieceWidth = pieceWidth * scale;
+
+        var xPixel = 0;
+        var yPixel = 0;
+        for (var i = 0; i < maxPieces; i++) {
+
+        var puzzlePiece = new Kinetic.Rect({
+                x: 0,
+                y: 0,
+                brightness: 0,
+                blurRadius: 0,
+                width: scaledPieceWidth,
+                height: scaledPieceWidth,
+          fillPatternImage: image,
+          fillPatternOffset: {x:xPixel, y:yPixel},
+          fillPatternScale: {x:scale, y:scale},
+          stroke: 'black',
+          strokeWidth: 4,
+          draggable: true
+        });
+
+
+            puzzlePiece.cache();
+            puzzlePiece.drawHitFromCache();
+            puzzlePiece.filters([
+              Kinetic.Filters.Blur,
+              Kinetic.Filters.Brighten
+            ]);
+
+            // on dragstart move to top and redraw
+            puzzlePiece.on('dragstart', function() {
+              this.moveToTop();
+              layer.draw();
+            });
+
+            // glow on mouseover
+            puzzlePiece.on('mouseover touchstart', function() {
+              this.brightness(0.2);
+              this.draw();
+              document.body.style.cursor = 'pointer';
+            });
+            // normal on mouseout
+            puzzlePiece.on('mouseout touchend', function() {
+              this.brightness(0);
+              this.draw();
+              document.body.style.cursor = 'default';
+            });
+
+            // on drag change pointer
+            puzzlePiece.on('dragmove', function() {
+              document.body.style.cursor = 'pointer';
+            });
+
+
+            layer.add(puzzlePiece);
+
+            xPixel += pieceWidth;
+            if (xPixel > image.width) {
+                xPixel = 0;
+                yPixel += pieceWidth;
+            }
+
+        }
+
+
+      }
+
+      loadImage('/image/{{image_key}}', initStage);
+
+
+    </script>
+
+
+
+
+    <div class='pictags'>
+        Tags:
+        {% for tag in pic.tags %}
+        <a href='/search?q={{tag}}'>{{tag}}</a>{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    </div>
+    <a href='/album/{{pic.album.key}}'>Back to album</a>
+
+    <p><a class="btn btn-primary btn-lg" role="button">Learn more</a></p>
+
+
+
+{% endblock %}

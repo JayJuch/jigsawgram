@@ -1,0 +1,5 @@
+{% if authenticated %}
+<a href='{{url}}'><button class="btn btn-success">Sign out {{username}}</button></a>
+{% else %}
+<a href='{{url}}'><button class="btn btn-success">Sign in</button></a>
+{% endif %}
