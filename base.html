@@ -36,8 +36,12 @@
       </div>
     </div>
 
-        <div class="container theme-showcase" role="main">{% block header %}{% block title %}{% endblock %}{% endblock %}
-{% block content %}{% endblock %}
+        <div class="container theme-showcase" role="main">
+            {% block header %}
+                {% block title %}{% endblock %}
+            {% endblock %}
+            {% block content %}
+            {% endblock %}
         </div>
   </body>
 </html>
