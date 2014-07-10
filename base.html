@@ -3,7 +3,7 @@
 <html>
   <head>
     <title>
-      {% block headtitle %}Jigsaw Gram{% endblock %}
+      {% block headtitle %}JIGSAWGRAM{% endblock %}
     </title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
@@ -22,7 +22,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">jigsawGram</a>
+          <a class="navbar-brand" href="#">JIGSAWGRAM</a>
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav ">
@@ -36,8 +36,8 @@
       </div>
     </div>
 
-        <h1>{%block header %}{% block title %}{% endblock %}{%endblock%}</h1>
+        <div class="container theme-showcase" role="main">{% block header %}{% block title %}{% endblock %}{% endblock %}
 {% block content %}{% endblock %}
-
+        </div>
   </body>
 </html>

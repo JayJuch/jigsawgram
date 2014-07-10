@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{pic.title}}{% endblock %}
 {% block content %}
-    <h1>{{pic.caption}}</h1>
+<p>
+From {{pic.submitter}}<br>
+{{pic.caption}}
+</p>
 
-    <h2>from {{pic.submitter}}</h2>
 
 <div class="container special">
     <div class="jumbotron">
-        <div class="fullarea" id="jigsawContainer"></div>
+        <div class="fullarea" id="jigsawContainer" style="height:768px"></div>
     </div>
 </div>
 
@@ -186,7 +188,6 @@
     </div>
     <a href='/album/{{pic.album.key}}'>Back to album</a>
 
-    <p><a class="btn btn-primary btn-lg" role="button">Learn more</a></p>
 
 
 
