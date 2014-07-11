@@ -91,9 +91,9 @@ From {{pic.submitter}}<br>
         var background = new Kinetic.Layer();
         var puzzleLayer = new Kinetic.Layer();
 
-        drawBackground(puzzleLayer, image, scale);
+        drawBackground(background, image, scale);
 
-        stage.add(puzzleLayer);
+        stage.add(background);
 
         stage.toDataURL({
             callback: function (dataURL){
@@ -103,9 +103,16 @@ From {{pic.submitter}}<br>
                 img.src = dataURL;
                 img.onload = function () {
                     createPuzzlePieces(img,10, puzzleLayer);
+                    setTimeout(
+                        function(){
+                            background.hide();
+                            stage.draw();
+                        }
+                    ,3000)
                 }
             }
         });
+        stage.add(puzzleLayer);
 
       }
 
@@ -117,7 +124,7 @@ From {{pic.submitter}}<br>
 
         var xPixel = 0;
         var yPixel = 0;
-        for (var i = 0; i < maxPieces; i++) {
+        while (yPixel < image.height - (pieceWidth/3) && xPixel < image.width - (pieceWidth/3)) {
 
             var puzzlePiece = new Kinetic.Rect({
                 x: 0,
@@ -132,6 +139,8 @@ From {{pic.submitter}}<br>
                 strokeWidth: 4,
                 draggable: true
             });
+
+            puzzlePiece.lockedIn = false;
 
             puzzlePiece.xFit = xPixel;
             puzzlePiece.yFit = yPixel;
@@ -150,15 +159,19 @@ From {{pic.submitter}}<br>
 
             // glow on mouseover
             puzzlePiece.on('mouseover touchstart', function() {
-              this.brightness(0.2);
-              this.draw();
-              document.body.style.cursor = 'pointer';
+                if (!this.lockedIn) {
+                    this.brightness(0.2);
+                    this.draw();
+                    document.body.style.cursor = 'pointer';
+                }
             });
             // normal on mouseout
             puzzlePiece.on('mouseout touchend', function() {
-              this.brightness(0);
-              this.draw();
-              document.body.style.cursor = 'default';
+                if (!this.lockedIn) {
+                    this.brightness(0);
+                    this.draw();
+                    document.body.style.cursor = 'default';
+                }
             });
 
             // on drag change pointer
@@ -169,6 +182,8 @@ From {{pic.submitter}}<br>
             puzzlePiece.on('dragend', function() {
               if(isNearFit(this)) {
                 this.setPosition({x:this.xFit, y:this.yFit});
+                this.brightness(0);
+                this.moveToBottom();
                 layer.draw();
 
 //                if(++score >= 4) {
@@ -177,6 +192,7 @@ From {{pic.submitter}}<br>
 //                }
 
                   this.setDraggable(false);
+                  this.lockedIn = true;
               }
             });
 
