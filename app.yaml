@@ -8,6 +8,9 @@ handlers:
 - url: /media
   static_dir: media
 
+- url: /media/fonts
+  static_dir: media/fonts
+
 - url: /(new|upload.*)
   script: image_sharing.py
   login: required

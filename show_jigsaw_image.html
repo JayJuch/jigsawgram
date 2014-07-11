@@ -24,15 +24,13 @@ From {{pic.submitter}}<br>
         image.src = source;
       }
 
+      var GRACE_RANGE = 50;
 
-
-      function isNearOutline(animal, outline) {
-        var a = animal;
-        var o = outline;
+      function isNearFit(a) {
         var ax = a.getX();
         var ay = a.getY();
 
-        if(ax > o.x - 20 && ax < o.x + 20 && ay > o.y - 20 && ay < o.y + 20) {
+        if(ax > a.xFit - GRACE_RANGE && ax < a.xFit + GRACE_RANGE && ay > a.yFit - GRACE_RANGE && ay < a.yFit + GRACE_RANGE) {
           return true;
         }
         else {
@@ -57,6 +55,7 @@ From {{pic.submitter}}<br>
           draggable: true
         });
         background.add(bgImage);
+
       }
 
 
@@ -93,40 +92,49 @@ From {{pic.submitter}}<br>
         var puzzleLayer = new Kinetic.Layer();
 
         drawBackground(puzzleLayer, image, scale);
-        createPuzzlePieces(image,10, scale, puzzleLayer);
 
-
-//        stage.add(background);
         stage.add(puzzleLayer);
+
+        stage.toDataURL({
+            callback: function (dataURL){
+                //outerStage.clear();
+
+                var img = new Image();
+                img.src = dataURL;
+                img.onload = function () {
+                    createPuzzlePieces(img,10, puzzleLayer);
+                }
+            }
+        });
 
       }
 
-      function createPuzzlePieces(image, maxPieces, scale, layer) {
+      function createPuzzlePieces(image, maxPieces, layer) {
         var area = image.width * image.height;
         var areaPiece = area / maxPieces;
         var pieceWidth = Math.floor(Math.sqrt(areaPiece)) + 1;
-        var scaledPieceWidth = pieceWidth * scale;
+
 
         var xPixel = 0;
         var yPixel = 0;
         for (var i = 0; i < maxPieces; i++) {
 
-        var puzzlePiece = new Kinetic.Rect({
+            var puzzlePiece = new Kinetic.Rect({
                 x: 0,
                 y: 0,
                 brightness: 0,
                 blurRadius: 0,
-                width: scaledPieceWidth,
-                height: scaledPieceWidth,
-          fillPatternImage: image,
-          fillPatternOffset: {x:xPixel, y:yPixel},
-          fillPatternScale: {x:scale, y:scale},
-          stroke: 'black',
-          strokeWidth: 4,
-          draggable: true
-        });
+                width: pieceWidth,
+                height: pieceWidth,
+                fillPatternImage: image,
+                fillPatternOffset: {x:xPixel, y:yPixel},
+                stroke: 'black',
+                strokeWidth: 4,
+                draggable: true
+            });
 
-
+            puzzlePiece.xFit = xPixel;
+            puzzlePiece.yFit = yPixel;
             puzzlePiece.cache();
             puzzlePiece.drawHitFromCache();
             puzzlePiece.filters([
@@ -158,6 +166,19 @@ From {{pic.submitter}}<br>
               document.body.style.cursor = 'pointer';
             });
 
+            puzzlePiece.on('dragend', function() {
+              if(isNearFit(this)) {
+                this.setPosition({x:this.xFit, y:this.yFit});
+                layer.draw();
+
+//                if(++score >= 4) {
+//                  var text = 'You win! Enjoy your booty!'
+//                  drawBackground(background, images.beach, text);
+//                }
+
+                  this.setDraggable(false);
+              }
+            });
 
             layer.add(puzzlePiece);
 
