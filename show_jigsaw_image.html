@@ -24,13 +24,13 @@ From {{pic.submitter}}<br>
         image.src = source;
       }
 
-      var GRACE_RANGE = 50;
+      var DEVIATION_RATE = 0.30;
 
-      function isNearFit(a) {
+      function isNearFit(a, deviation) {
         var ax = a.getX();
         var ay = a.getY();
 
-        if(ax > a.xFit - GRACE_RANGE && ax < a.xFit + GRACE_RANGE && ay > a.yFit - GRACE_RANGE && ay < a.yFit + GRACE_RANGE) {
+        if(ax > a.xFit - deviation && ax < a.xFit + deviation && ay > a.yFit - deviation && ay < a.yFit + deviation) {
           return true;
         }
         else {
@@ -102,13 +102,14 @@ From {{pic.submitter}}<br>
                 var img = new Image();
                 img.src = dataURL;
                 img.onload = function () {
-                    createPuzzlePieces(img,10, puzzleLayer);
+                    createPuzzlePieces(img,15, puzzleLayer, background);
                     setTimeout(
                         function(){
-                            background.hide();
+                            //background.hide();
+                            background.opacity(0.1);
                             stage.draw();
                         }
-                    ,3000)
+                    ,1000)
                 }
             }
         });
@@ -116,94 +117,104 @@ From {{pic.submitter}}<br>
 
       }
 
-      function createPuzzlePieces(image, maxPieces, layer) {
+
+
+      function createPuzzlePieces(image, maxPieces, layer, backgroundLayer) {
         var area = image.width * image.height;
         var areaPiece = area / maxPieces;
         var pieceWidth = Math.floor(Math.sqrt(areaPiece)) + 1;
 
+        var xPieces = Math.floor(image.width / pieceWidth);
+        var yPieces = Math.floor(image.height / pieceWidth);
 
-        var xPixel = 0;
-        var yPixel = 0;
-        while (yPixel < image.height - (pieceWidth/3) && xPixel < image.width - (pieceWidth/3)) {
+        var yPixel = Math.floor((image.height % pieceWidth ) / 2);
 
-            var puzzlePiece = new Kinetic.Rect({
-                x: 0,
-                y: 0,
-                brightness: 0,
-                blurRadius: 0,
-                width: pieceWidth,
-                height: pieceWidth,
-                fillPatternImage: image,
-                fillPatternOffset: {x:xPixel, y:yPixel},
-                stroke: 'black',
-                strokeWidth: 4,
-                draggable: true
-            });
+        var finishCount = xPieces * yPieces;
+        var doneCount = 0;
 
-            puzzlePiece.lockedIn = false;
+        var deviation = Math.ceil(pieceWidth * DEVIATION_RATE);
 
-            puzzlePiece.xFit = xPixel;
-            puzzlePiece.yFit = yPixel;
-            puzzlePiece.cache();
-            puzzlePiece.drawHitFromCache();
-            puzzlePiece.filters([
-              Kinetic.Filters.Blur,
-              Kinetic.Filters.Brighten
-            ]);
+        for (yIndex = 0; yIndex < yPieces; yIndex++) {
+            var xPixel = Math.floor((image.width % pieceWidth ) / 2);
+            for (xIndex = 0; xIndex < xPieces; xIndex++) {
 
-            // on dragstart move to top and redraw
-            puzzlePiece.on('dragstart', function() {
-              this.moveToTop();
-              layer.draw();
-            });
+                var puzzlePiece = new Kinetic.Rect({
+                    x: Math.floor(Math.random() * (image.width - pieceWidth)),
+                    y: Math.floor(Math.random() * (image.height - pieceWidth)),
+                    brightness: 0,
+                    blurRadius: 0,
+                    width: pieceWidth,
+                    height: pieceWidth,
+                    fillPatternImage: image,
+                    fillPatternOffset: {x:xPixel, y:yPixel},
+                    stroke: 'black',
+                    strokeWidth: 4,
+                    draggable: true
+                });
 
-            // glow on mouseover
-            puzzlePiece.on('mouseover touchstart', function() {
-                if (!this.lockedIn) {
-                    this.brightness(0.2);
-                    this.draw();
-                    document.body.style.cursor = 'pointer';
-                }
-            });
-            // normal on mouseout
-            puzzlePiece.on('mouseout touchend', function() {
-                if (!this.lockedIn) {
+                puzzlePiece.lockedIn = false;
+
+                puzzlePiece.xFit = xPixel;
+                puzzlePiece.yFit = yPixel;
+                puzzlePiece.cache();
+                puzzlePiece.drawHitFromCache();
+                puzzlePiece.filters([
+                  Kinetic.Filters.Blur,
+                  Kinetic.Filters.Brighten
+                ]);
+
+                // on dragstart move to top and redraw
+                puzzlePiece.on('dragstart', function() {
+                  this.moveToTop();
+                  layer.draw();
+                });
+
+                // glow on mouseover
+                puzzlePiece.on('mouseover touchstart', function() {
+                    if (!this.lockedIn) {
+                        this.brightness(0.15);
+                        this.draw();
+                        document.body.style.cursor = 'pointer';
+                    }
+                });
+                // normal on mouseout
+                puzzlePiece.on('mouseout touchend', function() {
+                    if (!this.lockedIn) {
+                        this.brightness(0);
+                        this.draw();
+                        document.body.style.cursor = 'default';
+                    }
+                });
+
+                // on drag change pointer
+                puzzlePiece.on('dragmove', function() {
+                  document.body.style.cursor = 'pointer';
+                });
+
+                puzzlePiece.on('dragend', function() {
+                  if(isNearFit(this, deviation)) {
+                    this.setPosition({x:this.xFit, y:this.yFit});
                     this.brightness(0);
-                    this.draw();
-                    document.body.style.cursor = 'default';
-                }
-            });
+                    this.moveToBottom();
+                    layer.draw();
 
-            // on drag change pointer
-            puzzlePiece.on('dragmove', function() {
-              document.body.style.cursor = 'pointer';
-            });
+                    // finished!
+                    if(++doneCount == finishCount) {
+                      backgroundLayer.moveToTop();
+                      backgroundLayer.opacity(1);
+                      backgroundLayer.draw();
+                    }
 
-            puzzlePiece.on('dragend', function() {
-              if(isNearFit(this)) {
-                this.setPosition({x:this.xFit, y:this.yFit});
-                this.brightness(0);
-                this.moveToBottom();
-                layer.draw();
+                      this.setDraggable(false);
+                      this.lockedIn = true;
+                  }
+                });
 
-//                if(++score >= 4) {
-//                  var text = 'You win! Enjoy your booty!'
-//                  drawBackground(background, images.beach, text);
-//                }
+                layer.add(puzzlePiece);
 
-                  this.setDraggable(false);
-                  this.lockedIn = true;
-              }
-            });
-
-            layer.add(puzzlePiece);
-
-            xPixel += pieceWidth;
-            if (xPixel > image.width) {
-                xPixel = 0;
-                yPixel += pieceWidth;
+                xPixel += pieceWidth;
             }
-
+            yPixel += pieceWidth;
         }
 
 
